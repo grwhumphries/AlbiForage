@@ -234,7 +234,9 @@ RF.preds<-function(Track,Id,WS,RF.mtry,RF.ntree,Predictors,CV=TRUE,verbose=TRUE)
   
   Modlist<-list.files(path=WS,pattern="*.txt",full.names=TRUE)
   OUTPUT<-matrix(nrow=nrow(Track),ncol=0)
+  rfimps<-matrix(nrow=length(Predictors),ncol=0)
   
+
   colname<-1
   for(Mod in Modlist){
     
@@ -264,11 +266,13 @@ RF.preds<-function(Track,Id,WS,RF.mtry,RF.ntree,Predictors,CV=TRUE,verbose=TRUE)
     C<-data.frame(clusterlab=B$clusterlab,Eindex=B$Eindex,RowIndices=B$RowIndices,BirdName=B$BirdName)      # Create a dataframe with the indices, cluster labels, and row indices
     B<-data.frame(dplyr::select(B,-Eindex,-RowIndices,-BirdName))
     
-    
-      
+          
     rf1 <- randomForest(as.factor(clusterlab)~.,mtry=RF.mtry,ntree=RF.ntree,data = B,importance=T)          #### B is the training data for the model
     
-       
+    
+    rfIp<-data.frame(importance(rf1)[,"MeanDecreaseGini"])                                                  # Gets variable importances for trimming, etc.
+    rfimps<-cbind(rfimps,rfIp[,1])
+        
     prds<-predict(rf1,Track)                                                                                #### Now we predict back to the Track 
     OUTPUT<-cbind(OUTPUT,prds)
     colnames(OUTPUT)[ncol(OUTPUT)]<-paste("prds",colname,sep="")
@@ -281,8 +285,13 @@ RF.preds<-function(Track,Id,WS,RF.mtry,RF.ntree,Predictors,CV=TRUE,verbose=TRUE)
               cat("--------------------------------------------------------------","\n")
   }
 
+  rfimp.mean<-rowMeans(rfimps)                                                                              # Calculate the mean importance
+  rfimp.frame<-tbl_df(data.frame(Predictors=Predictors,MeanDecreaseGini=rfimp.mean))
 
-  return(OUT)
+  rfImp<-arrange(rfimp.frame,-MeanDecreaseGini)
+  
+
+  return(list(OUT,rfImp))
 }
 
 

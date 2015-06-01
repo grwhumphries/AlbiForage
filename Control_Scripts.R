@@ -34,7 +34,7 @@ for(Track in Tracks){
   Id<-as.character(Track$BirdName[1])
   df<-cluslab.to.track(Track,Id,ModWS,verbose=TRUE)
   dfprd<-RF.preds(df,Id,ModWS,RF.mtry,RF.ntree,Predictors,CV=FALSE,verbose=TRUE)  
-  prdcor<-Pred.Correct(dfprd,write.out=TRUE,Id,PlotWS,verbose=TRUE)
+  prdcor<-Pred.Correct(dfprd[[1]],write.out=TRUE,Id,PlotWS,verbose=TRUE)
   SummaryTable<-Summary.table(prdcor, range)
   Assessment<-assess.model(SummaryTable, Id)
   print(Assessment)
