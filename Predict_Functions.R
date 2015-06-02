@@ -211,8 +211,7 @@ VarImps<-function(WS,RF.mtry,RF.ntree,Predictors,verbose=TRUE){
     rfIp<-data.frame(importance(rf1)[,"MeanDecreaseGini"])                                                  # Gets variable importances for trimming, etc.
     rfimps<-cbind(rfimps,rfIp[,1])
     
-    prds<-predict(rf1,Track)                                                                                #### Now we predict back to the Track 
-
+    
   }
   
   rfimp.mean<-rowMeans(rfimps)                                                                              # Calculate the mean importance
