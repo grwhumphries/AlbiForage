@@ -146,6 +146,86 @@ if(verbose) cat("complete...")
 
 
 
+#######################################################################
+#### GET MEAN VARIABLE IMPORTANCES FROM RF MODELS FOR VAR TRIMMING ####
+#######################################################################
+
+### Will want to put plotting functions in here to get out variable plots ###
+
+VarImps<-function(WS,RF.mtry,RF.ntree,Predictors,verbose=TRUE){
+  #########################################################################################################################
+  # WS          = Workspace where Model training data are located                 (Character string)
+  # Predictors  = Vector of predictors to be used for modeling                    (Vector)
+  # CV          = If TRUE, will do predictions using independent subsets          (Boolean)
+  # verbose     = If TRUE, will output iteratively                                (Boolean)
+  # RF.mtry     = Random Forests MTRY setting                                     (Integer)
+  # RF.ntree    = Random Forests maximum trees setting                            (Integer)
+  
+  
+  #####################################################
+  # Variable definitions in function
+  #####################################################
+  #### Modlist    = List of full path names from the training data files
+  #### OUTPUT     = matrix that will be returned in this function
+  #### Mod        = Iteratively drawn Model from the ModList
+  #### colname    = We use this variable to define the column names where predictions are stored
+  #### A          = The filename "Mod" opened as a data frame
+  #### B          = Complete cases of data frame A
+  #### C          = Data frame with ID variables for re-merging
+  #### rf1        = random forests model object
+  #### OUT        = Track output with associated predictions
+  
+  if(verbose){cat("--------------------------------------------------------------","\n")
+              cat("Calculating variable importances across training data samples", "\n")           
+  }
+  
+  
+  set.seed(248)
+  
+  Modlist<-list.files(path=WS,pattern="*.txt",full.names=TRUE)
+  rfimps<-matrix(nrow=length(Predictors),ncol=0)
+  
+  
+  colname<-1
+  for(Mod in Modlist){
+    
+    if(verbose) cat("running model using ",Mod,"\n")
+    
+    A<-tbl_df(read.table(Mod,sep=",",header=T))                                                             # Read the table Mod  
+    A<-tbl_df(data.frame(A[,Predictors],clusterlab=A$clusterlab,Eindex=A$Eindex,BirdName=A$BirdName))       # Select the "Predictors" columns
+    A$RowIndices<-c(1:nrow(A))                                                                              # Set row-indices so the data can be matched back to the tracks
+    
+    if(length(which(names(A)=="torSeg1"))==1){                                                              #### The variables torSeg1 and torSeg2 sometimes have problems with INF values...
+      A<-A[is.finite(A$torSeg1),]
+    }
+    
+    if(length(which(names(A)=="torSeg2"))==1){
+      A<-A[is.finite(A$torSeg2),]
+    }
+    
+    B<-A[complete.cases(A),]
+    C<-data.frame(clusterlab=B$clusterlab,Eindex=B$Eindex,RowIndices=B$RowIndices,BirdName=B$BirdName)      # Create a dataframe with the indices, cluster labels, and row indices
+    B<-data.frame(dplyr::select(B,-Eindex,-RowIndices,-BirdName))
+    
+    rf1 <- randomForest(as.factor(clusterlab)~.,mtry=RF.mtry,ntree=RF.ntree,data = B,importance=T)          #### B is the training data for the model
+    rfIp<-data.frame(importance(rf1)[,"MeanDecreaseGini"])                                                  # Gets variable importances for trimming, etc.
+    rfimps<-cbind(rfimps,rfIp[,1])
+    
+    prds<-predict(rf1,Track)                                                                                #### Now we predict back to the Track 
+
+  }
+  
+  rfimp.mean<-rowMeans(rfimps)                                                                              # Calculate the mean importance
+  rfimp.frame<-tbl_df(data.frame(Predictors=Predictors,MeanDecreaseGini=rfimp.mean))
+  
+  rfImp<-arrange(rfimp.frame,-MeanDecreaseGini)                                                             # Sorts the dataframe from most important to least
+  
+  
+  return(rfImp)
+}
+
+
+
 #######################################################################################
 #### THIS WILL MATCH CLUSTER LABELS FROM MODEL DATA (create.train()) TO THE TRACKS ####
 #######################################################################################
@@ -234,8 +314,6 @@ RF.preds<-function(Track,Id,WS,RF.mtry,RF.ntree,Predictors,CV=TRUE,verbose=TRUE)
   
   Modlist<-list.files(path=WS,pattern="*.txt",full.names=TRUE)
   OUTPUT<-matrix(nrow=nrow(Track),ncol=0)
-  rfimps<-matrix(nrow=length(Predictors),ncol=0)
-  
 
   colname<-1
   for(Mod in Modlist){
@@ -268,11 +346,7 @@ RF.preds<-function(Track,Id,WS,RF.mtry,RF.ntree,Predictors,CV=TRUE,verbose=TRUE)
     
           
     rf1 <- randomForest(as.factor(clusterlab)~.,mtry=RF.mtry,ntree=RF.ntree,data = B,importance=T)          #### B is the training data for the model
-    
-    
-    rfIp<-data.frame(importance(rf1)[,"MeanDecreaseGini"])                                                  # Gets variable importances for trimming, etc.
-    rfimps<-cbind(rfimps,rfIp[,1])
-        
+            
     prds<-predict(rf1,Track)                                                                                #### Now we predict back to the Track 
     OUTPUT<-cbind(OUTPUT,prds)
     colnames(OUTPUT)[ncol(OUTPUT)]<-paste("prds",colname,sep="")
@@ -285,13 +359,7 @@ RF.preds<-function(Track,Id,WS,RF.mtry,RF.ntree,Predictors,CV=TRUE,verbose=TRUE)
               cat("--------------------------------------------------------------","\n")
   }
 
-  rfimp.mean<-rowMeans(rfimps)                                                                              # Calculate the mean importance
-  rfimp.frame<-tbl_df(data.frame(Predictors=Predictors,MeanDecreaseGini=rfimp.mean))
-
-  rfImp<-arrange(rfimp.frame,-MeanDecreaseGini)
-  
-
-  return(list(OUT,rfImp))
+  return(OUT)
 }
 
 
