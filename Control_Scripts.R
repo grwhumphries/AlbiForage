@@ -37,8 +37,8 @@ while(length(Predictors)>3){
   
   v.Imps<-VarImps(ModWS,RF.mtry,RF.ntree,Predictors,verbose=TRUE)
   
-  assess.matrix<-matrix(ncol=4,nrow=0)
-  colnames(assess.matrix)<-c("Prop.corr","Total.Over","Beh.Type","Bird")
+  assess.matrix<-matrix(ncol=5,nrow=0)
+  colnames(assess.matrix)<-c("Prop.corr","Total.Over","Beh.Type","Bird","Tdiff")
 
   for(Track in Tracks){
     

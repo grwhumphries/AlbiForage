@@ -536,8 +536,9 @@ assess.model<-function(SummaryTable, Id){
 #### f        = Proportion of correctly classified cluster labels
 #### G        = Total number of predictions of a specific cluster label overall
 #### H        = Total number of over-predicted points
+#### k        = Mean time differences
 
-  A<-matrix(ncol=3,nrow=0)
+  A<-matrix(ncol=4,nrow=0)
   B<-matrix(ncol=1,nrow=0)
   
   for(j in unique(SummaryTable[,"Btyp"])){
@@ -554,14 +555,16 @@ assess.model<-function(SummaryTable, Id){
       
     H<-G-E                                                 ## Total number of over-predictions from particular Btyp
     
-    rw<-data.frame(f,H,j)                                  ## put proportion correct, total number of over predictions and Btyp in a row then append to matrix A
+    k<-mean(C[,"tdiff"],na.rm=TRUE)                        ## Mean time difference of predictions v observed
+    
+    rw<-data.frame(f,H,j,k)                                ## put proportion correct, total number of over predictions and Btyp in a row then append to matrix A
   
     A<-rbind(A,rw)
     B<-rbind(B,Id)                                         ## in order to prevent formation of a character matrix, bind names to another one
   }
   
   A<-data.frame(A)
-  names(A)<-c("prop.corr","Total.Over","Beh.Type")
+  names(A)<-c("prop.corr","Total.Over","Beh.Type","mean.tdiff")
   A$Bird<-B[,1]
   
   return(A)
