@@ -25,8 +25,8 @@ range<-10
 
 zz<-1
 while(length(Predictors)>3){
-
-
+  print(zz)
+  
   Create.Train(WS,ModWS,Species,Nmodels,samples,Nclus,RF.mtry,RF.ntree,Predictors,PLOT=T,OUTPUT=T,verbose=TRUE,threed=FALSE)
   
   v.Imps<-VarImps(ModWS,RF.mtry,RF.ntree,Predictors,verbose=TRUE)
@@ -54,17 +54,20 @@ while(length(Predictors)>3){
   matrix.name<-paste(PlotWS,"Output_assessment/assess_",zz,".csv",sep="")
   write.csv(assess.matrix,matrix.name,row.names=F)
 
+  pred.name<-paste(PlotWS,"Output_assessment/predictors_",zz,".txt",sep="")
+  write(Predictors,pred.name)
+  
   Predictors<-as.vector(v.Imps$Predictors)[1:(nrow(v.Imps)-2)]
   
 }
 
 
+
+
+
+
 WS<-PlotWS
 Plot.track(plot.all=FALSE,PlotWS,interactive=TRUE,Sit.Fly=FALSE,verbose=TRUE)
-
-
-
-
 
 
 
@@ -73,7 +76,7 @@ ModWS<-"C:/Users/Grant/Dropbox/GrantHumphriesBackup/Projects/Albatross/WAAL/Bird
 setwd(WS)
 Id<-"Bird_12503"
 
-#### Add the Importance and variable trimming function
+
 #### Incubating v Brooding birds
 
 
