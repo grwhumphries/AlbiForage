@@ -9,7 +9,7 @@ Predictors<-c("SWH","Bathy","Dist_to_coast","SST","WindDifferential","WindDirToF
               "WinDifSeg1","torSeg2","AccelSeg2","Pathchange2","PathChange_headwind2","WinDifSeg2")
 
 
-Predictors<-c("ResT_during","torSeg2","ResT_before","Fnspd")
+#Predictors<-c("ResT_during","torSeg2","ResT_before","Fnspd")
 
 
 
@@ -42,8 +42,7 @@ while(length(Predictors)>3){
 
   for(Track in Tracks){
     
-    
-    
+
     Id<-as.character(Track$BirdName[1])
     df<-cluslab.to.track(Track,Id,ModWS,verbose=TRUE)
     dfprd<-RF.preds(df,Id,ModWS,RF.mtry,RF.ntree,Predictors,CV=FALSE,verbose=F)  
