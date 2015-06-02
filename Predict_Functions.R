@@ -508,7 +508,7 @@ Summary.table<-function(Track, range){
       
       Btyp<-A$Predicted[i]
       t.evs<-length(which(A$Observed==A$Predicted[i]))
-      rw<-c(Btyp,t.evs,tdiff)
+      rw<-data.frame(Btyp,t.evs,tdiff)
       B<-rbind(B,rw)
     } 
   }
@@ -541,28 +541,23 @@ assess.model<-function(SummaryTable, Id){
   B<-matrix(ncol=1,nrow=0)
   
   for(j in unique(SummaryTable[,"Btyp"])){
-    ## First, subset for each unique value of "Btyp" (cluster label)
-    C<-subset(SummaryTable,SummaryTable[,"Btyp"]==j)    
-  
-    ## We pull the first value for total number of events (i.e. total number of observed events in the Track)
-    D<-C[1,"total.evs"]
     
-    ## This is the total number of times that the value Btyp was correctly predicted in the track
-    E<-length(which(C[,"tdiff"]>0))
+    C<-subset(SummaryTable,SummaryTable[,"Btyp"]==j)       ## First, subset for each unique value of "Btyp" (cluster label)
     
-    ## Proportion of correctly classified events of specific cluster label
-    f<-E/D * 100
+    D<-C[1,"total.evs"]                                    ## We pull the first value for total number of events (i.e. total number of observed events in the Track)
+      
+    E<-length(which(!is.na(C[,"tdiff"])))                  ## This is the total number of times that the value Btyp was correctly predicted in the track
+        
+    f<-E/D * 100                                           ## Proportion of correctly classified events of specific cluster label
+      
+    G<-nrow(C)                                             ## Represents the total number of predictions made by the algorithm
+      
+    H<-G-E                                                 ## Total number of over-predictions from particular Btyp
     
-    ## Represents the total number of predictions made by the algorithm
-    G<-nrow(C)
-    
-    ## Total number of over-predictions from particular Btyp
-    H<-G-E
-    ## put proportion correct, total number of over predictions and Btyp in a row then append to matrix A
-    rw<-c(f,H,j)
+    rw<-data.frame(f,H,j)                                  ## put proportion correct, total number of over predictions and Btyp in a row then append to matrix A
   
     A<-rbind(A,rw)
-    B<-rbind(B,Id)           ## in order to prevent formation of a character matrix, bind names to another one
+    B<-rbind(B,Id)                                         ## in order to prevent formation of a character matrix, bind names to another one
   }
   
   A<-data.frame(A)
