@@ -545,7 +545,7 @@ assess.model<-function(SummaryTable, Id){
     
     C<-subset(SummaryTable,SummaryTable[,"Btyp"]==j)       ## First, subset for each unique value of "Btyp" (cluster label)
     
-    D<-C[1,"total.evs"]                                    ## We pull the first value for total number of events (i.e. total number of observed events in the Track)
+    D<-C[1,"t.evs"]                                        ## We pull the first value for total number of events (i.e. total number of observed events in the Track)
       
     E<-length(which(!is.na(C[,"tdiff"])))                  ## This is the total number of times that the value Btyp was correctly predicted in the track
         
@@ -557,7 +557,7 @@ assess.model<-function(SummaryTable, Id){
     
     k<-mean(C[,"tdiff"],na.rm=TRUE)                        ## Mean time difference of predictions v observed
     
-    rw<-data.frame(f,H,j,k)                                ## put proportion correct, total number of over predictions and Btyp in a row then append to matrix A
+    rw<-data.frame(f,H,j,as.numeric(k))                    ## put proportion correct, total number of over predictions and Btyp in a row then append to matrix A
   
     A<-rbind(A,rw)
     B<-rbind(B,Id)                                         ## in order to prevent formation of a character matrix, bind names to another one
