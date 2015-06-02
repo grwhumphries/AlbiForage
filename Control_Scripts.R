@@ -23,22 +23,39 @@ range<-10
 
 
 
+zz<-1
+while(length(Predictors)>3){
 
-Create.Train(WS,ModWS,Species,Nmodels,samples,Nclus,RF.mtry,RF.ntree,Predictors,PLOT=T,OUTPUT=T,verbose=TRUE,threed=TRUE)
 
-filenames=list.files(path=WS, pattern="*.txt",full.names=TRUE)                                 
-Tracks = lapply(filenames, function(x){read.table(file=x,sep=",",header=T)})
+  Create.Train(WS,ModWS,Species,Nmodels,samples,Nclus,RF.mtry,RF.ntree,Predictors,PLOT=T,OUTPUT=T,verbose=TRUE,threed=FALSE)
+  
+  v.Imps<-VarImps(ModWS,RF.mtry,RF.ntree,Predictors,verbose=TRUE)
+  
+    
+  filenames=list.files(path=WS, pattern="*.txt",full.names=TRUE)                                 
+  Tracks = lapply(filenames, function(x){read.table(file=x,sep=",",header=T)})
+  
+  assess.matrix<-matrix(ncol=4,nrow=0)
+  colnames(assess.matrix)<-c("Prop.corr","Total.Over","Beh.Type","Bird")
 
-for(Track in Tracks){
+  for(Track in Tracks){
+  
+    Id<-as.character(Track$BirdName[1])
+    df<-cluslab.to.track(Track,Id,ModWS,verbose=TRUE)
+    dfprd<-RF.preds(df,Id,ModWS,RF.mtry,RF.ntree,Predictors,CV=FALSE,verbose=F)  
+    prdcor<-Pred.Correct(dfprd,write.out=F,Id,PlotWS,verbose=FALSE)
+    SummaryTable<-Summary.table(prdcor, range)
+    Assessment<-assess.model(SummaryTable, Id)
+  
+    assess.matrix<-rbind(assess.matrix,Assessment)
+  
+  }
 
-  Id<-as.character(Track$BirdName[1])
-  df<-cluslab.to.track(Track,Id,ModWS,verbose=TRUE)
-  dfprd<-RF.preds(df,Id,ModWS,RF.mtry,RF.ntree,Predictors,CV=FALSE,verbose=TRUE)  
-  prdcor<-Pred.Correct(dfprd[[1]],write.out=TRUE,Id,PlotWS,verbose=TRUE)
-  SummaryTable<-Summary.table(prdcor, range)
-  Assessment<-assess.model(SummaryTable, Id)
-  print(Assessment)
+  matrix.name<-paste(PlotWS,"Output_assessment/assess_",zz,".csv",sep="")
+  write.csv(assess.matrix,matrix.name,row.names=F)
 
+  Predictors<-as.vector(v.Imps$Predictors)[1:(nrow(v.Imps)-2)]
+  
 }
 
 
