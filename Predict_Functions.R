@@ -228,8 +228,6 @@ VarImps<-function(WS,RF.mtry,RF.ntree,Predictors,verbose=TRUE){
 #######################################################################################
 #### THIS WILL MATCH CLUSTER LABELS FROM MODEL DATA (create.train()) TO THE TRACKS ####
 #######################################################################################
-
-
 cluslab.to.track<-function(Track,Id,WS,verbose=TRUE){
 #########################################################################################################################
 # Track       = Dataframe of track that will have predictions                   (Data frame)
@@ -246,39 +244,30 @@ cluslab.to.track<-function(Track,Id,WS,verbose=TRUE){
 
   if(verbose) cat("Matching cluster labels with Track for ",Id, "\n")  
 
-  Modlist<-list.files(path=WS,pattern="*.txt",full.names=TRUE)
-  ### We read the very first Modlist file because the clusterlab data are all the same (only non-events) vary between each training file
-  A<-tbl_df(read.table(Modlist[[1]],sep=",",header=T))  
-  ### Now subset out cluster labels > 0
-  A<-filter(A,clusterlab>0)
+  Modlist<-list.files(path=WS,pattern="*.txt",full.names=TRUE)                         
+  
+  A<-tbl_df(read.table(Modlist[[1]],sep=",",header=T))                               ### We read the very first Modlist file because the clusterlab data are all the same (only non-events) vary between each training file
+  A<-filter(A,clusterlab>0)                                                          ### Now subset out cluster labels > 0
   B<-tbl_df(data.frame(Index=A$Eindex,BirdName=A$BirdName,Type=A$clusterlab))
   
-  ### Select values from B, where BirdName = the Id (bird of interest)
-  C<-filter(B,BirdName==Id)
-
+  C<-filter(B,BirdName==Id)                                                          ### Select values from B, where BirdName = the Id (bird of interest)
   Track$clusterlab<-"0"
-  
-  ### Go through each row of the events and append them in the correct location in "Track"
 
-  for(jj in 1:nrow(C)){
+  for(jj in 1:nrow(C)){                                                              ### Go through each row of the events and append them in the correct location in "Track"
     
-    #C$Index[jj] is the location (row) of the track, where that event occurred for row jj of the dataframe "C"
-    Track$clusterlab[C$Index[jj]]<-C$Type[jj]
-    
+        Track$clusterlab[C$Index[jj]]<-C$Type[jj]                                        #C$Index[jj] is the location (row) of the track, where that event occurred for row jj of the dataframe "C"
   }
   
   if(verbose) cat(Id,"complete","\n")
-
   return(Track)
   
 }
 
 
+
 ###################################################################################
 #### THIS FUNCTION CREATES PREDICTIONS ON THE TRACK USED IN CLUSLAB.TO.TRACK() ####
 ###################################################################################
-
-
 RF.preds<-function(Track,Id,WS,RF.mtry,RF.ntree,Predictors,CV=TRUE,verbose=TRUE){
 #########################################################################################################################
 # Track       = This is the output from the function cluslab.to.track()         (Data frame)
@@ -543,21 +532,13 @@ assess.model<-function(SummaryTable, Id){
   for(j in unique(SummaryTable[,"Btyp"])){
     
     C<-subset(SummaryTable,SummaryTable[,"Btyp"]==j)       ## First, subset for each unique value of "Btyp" (cluster label)
-    
     D<-C[1,"t.evs"]                                        ## We pull the first value for total number of events (i.e. total number of observed events in the Track)
-      
-    E<-length(which(!is.na(C[,"tdiff"])))                  ## This is the total number of times that the value Btyp was correctly predicted in the track
-        
-    f<-E/D * 100                                           ## Proportion of correctly classified events of specific cluster label
-      
-    G<-nrow(C)                                             ## Represents the total number of predictions made by the algorithm
-      
-    H<-G-E                                                 ## Total number of over-predictions from particular Btyp
-    
-    k<-mean(C[,"tdiff"],na.rm=TRUE)                        ## Mean time difference of predictions v observed
-    
+    E<-length(which(!is.na(C[,"tdiff"])))                  ## This is the total number of times that the value Btyp was correctly predicted in the track        
+    f<-E/D * 100                                           ## Proportion of correctly classified events of specific cluster label  
+    G<-nrow(C)                                             ## Represents the total number of predictions made by the algorithm      
+    H<-G-E                                                 ## Total number of over-predictions from particular Btyp    
+    k<-mean(C[,"tdiff"],na.rm=TRUE)                        ## Mean time difference of predictions v observed    
     rw<-data.frame(f,D,G,H,j,as.numeric(k))                ## put proportion correct, total number of over predictions and Btyp in a row then append to matrix A
-  
     A<-rbind(A,rw)
     B<-rbind(B,Id)                                         ## in order to prevent formation of a character matrix, bind names to another one
   }
@@ -622,30 +603,21 @@ Plot.track<-function(plot.all=TRUE,WS,interactive=FALSE,Sit.Fly=FALSE,verbose=TR
       cat("--------------------------------------------------------------------------------","\n")
     }
     
-    ### List all the files in the workspace
-    A<-list.files(path=WS, pattern="*.txt",full.names=TRUE)
-    ### Then we use lapply to open them all simultaneously so we don't have to open them one at a time
-    B<-lapply(A, function(x){read.table(file=x,sep=",",header=T)})
     
-    ### Now we are looping through all the dataframes in B
-    for(C in B){
-     
-      ## this creates the ID of the track for plotting and saving
-      C.ID<-as.character(C$BirdName[1])
-            
+    A<-list.files(path=WS, pattern="*.txt",full.names=TRUE)                                                                     ### List all the files in the workspace
+    B<-lapply(A, function(x){read.table(file=x,sep=",",header=T)})                                                              ### Then we use lapply to open them all simultaneously so we don't have to open them one at a time
+    
+    for(C in B){                                                                                                                ### Now we are looping through all the dataframes in B
+      
+      C.ID<-as.character(C$BirdName[1])                                                                                         ## this creates the ID of the track for plotting and saving        
       if(verbose) cat("Creating output plot for",C.ID,"\n")
-      ## Select the data we need from C
-      D<-data.frame(sitfly=as.factor(C$Sit.Fly),observed=C$clusterlab,predicted=C$predicted,x=C$X.Longitude,y=C$X.Latitude)
+      D<-data.frame(sitfly=as.factor(C$Sit.Fly),observed=C$clusterlab,predicted=C$predicted,x=C$X.Longitude,y=C$X.Latitude)     ## Select the data we need from C
       D$Index<-D$observed
       
-      ## This selects all the points where predicted >0 (i.e. all the predicted foraging events)
-      E<-tbl_df(D) %>% filter(predicted>0)    #,Sit.Fly=="Fly"
+      E<-tbl_df(D) %>% filter(predicted>0)    #,Sit.Fly=="Fly"                                                                  ## This selects all the points where predicted >0 (i.e. all the predicted foraging events)
+      E$Index<-E$predicted+10                                                                                                   ## We add 10 so that we can place them in a dataframe for plotting - placing into the column "Index" 
       
-      ## We add 10 so that we can place them in a dataframe for plotting - placing into the column "Index" 
-      E$Index<-E$predicted+10
-      
-      ## We rbind the two frames here  and then convert the newly formed Index column to a factor
-      f<-rbind(D,E)
+      f<-rbind(D,E)                                                                                                             ## We rbind the two frames here  and then convert the newly formed Index column to a factor
       f$Index<-factor(f$Index)
       
       ###### Calling in the ggplot here
@@ -720,15 +692,10 @@ Plot.track<-function(plot.all=TRUE,WS,interactive=FALSE,Sit.Fly=FALSE,verbose=TR
                  ), ...)
     }
     
-    
-    ### List all the files in the workspace
-    H<-list.files(path=WS, pattern="*.txt",full.names=TRUE)
-    ### Then we use lapply to open them all simultaneously so we don't have to open them one at a time
-    I<-do.call(rbind,lapply(H, function(x){read.table(file=x,sep=",",header=T)}))
-    
-    
-    ### We list all the available bird names in the directory
-    cat("Below are all available bird tracks in the directory: \n")
+    H<-list.files(path=WS, pattern="*.txt",full.names=TRUE)                                                           ### List all the files in the workspace
+    I<-do.call(rbind,lapply(H, function(x){read.table(file=x,sep=",",header=T)}))                                     ### Then we use lapply to open them all simultaneously so we don't have to open them one at a time
+                                                                                                                      
+    cat("Below are all available bird tracks in the directory: \n")                                                   ### We list all the available bird names in the directory
     cat("-------------------------------------------------------------- \n")
     cat(as.vector(unique(I$BirdName)),"\n")
     cat("-------------------------------------------------------------- \n")
@@ -739,10 +706,7 @@ Plot.track<-function(plot.all=TRUE,WS,interactive=FALSE,Sit.Fly=FALSE,verbose=TR
     while(Z==TRUE){
             
       I.ID<-readline("Please type in the name of the track you are selecting: ")
-      
-      ### This filters all the datapoints for the track selected by the user
-      J<-tbl_df(I) %>% filter(BirdName==I.ID)
-    
+      J<-tbl_df(I) %>% filter(BirdName==I.ID)                                                                          ### This filters all the datapoints for the track selected by the user
       if(nrow(J)==0){cat("error: the track you typed in does not exist, please try again")}else{Z<-FALSE}
 
     } #while Z==TRUE
@@ -752,10 +716,8 @@ Plot.track<-function(plot.all=TRUE,WS,interactive=FALSE,Sit.Fly=FALSE,verbose=TR
     ### The key value is for the "all_values" function, which is used for the tooltip
     K<-filter(J,predicted>0)
     K$Key<-1:nrow(K)
-    
-    ### We want to show where the cluster labels (observed values) exist as well
-    K1<-filter(J,clusterlab>0)
-    
+
+    K1<-filter(J,clusterlab>0)                                                ### We want to show where the cluster labels (observed values) exist as well  
     
     ggvis() %>%
       layer_points(~X.Longitude,~X.Latitude,data=J,size := 10)%>%
