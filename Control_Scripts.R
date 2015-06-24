@@ -33,7 +33,7 @@ zz<-1
 while(length(Predictors)>3){
   print(zz)
   
-  Create.Train(WS,ModWS,Species,Nmodels,samples,Nclus,RF.mtry,RF.ntree,Predictors,PLOT=T,OUTPUT=T,verbose=TRUE,threed=FALSE)
+  Create.Train(WS,ModWS,Species,Nmodels,samples,Nclus,RF.mtry,RF.ntree,Predictors,PLOT=T,OUTPUT=T,verbose=TRUE,threed=TRUE)
   
   v.Imps<-VarImps(ModWS,RF.mtry,RF.ntree,Predictors,verbose=TRUE)
   
@@ -41,9 +41,10 @@ while(length(Predictors)>3){
   colnames(assess.matrix)<-c("Prop.corr","Total.Over","Beh.Type","Bird","Tdiff")
 
   for(Track in Tracks){
-    
 
     Id<-as.character(Track$BirdName[1])
+    print(Id)
+    
     df<-cluslab.to.track(Track,Id,ModWS,verbose=TRUE)
     dfprd<-RF.preds(df,Id,ModWS,RF.mtry,RF.ntree,Predictors,CV=FALSE,verbose=F)  
     prdcor<-Pred.Correct(dfprd,write.out=F,Id,PlotWS,verbose=FALSE)
