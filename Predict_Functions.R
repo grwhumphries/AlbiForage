@@ -252,7 +252,8 @@ cluslab.to.track<-function(Track,Id,WS,verbose=TRUE){
   
   C<-filter(B,BirdName==Id)                                                          ### Select values from B, where BirdName = the Id (bird of interest)
   Track$clusterlab<-"0"
-
+  C<-filter(C,Index<nrow(Track))
+  
   for(jj in 1:nrow(C)){                                                              ### Go through each row of the events and append them in the correct location in "Track"
     
         Track$clusterlab[C$Index[jj]]<-C$Type[jj]                                        #C$Index[jj] is the location (row) of the track, where that event occurred for row jj of the dataframe "C"
@@ -305,7 +306,7 @@ RF.preds<-function(Track,Id,WS,RF.mtry,RF.ntree,Predictors,CV=TRUE,verbose=TRUE)
 
   colname<-1
   for(Mod in Modlist){
-    
+    try({
     if(verbose) cat("running model using ",Mod,"\n")
   
     A<-tbl_df(read.table(Mod,sep=",",header=T))                                                             # Read the table Mod
@@ -339,8 +340,11 @@ RF.preds<-function(Track,Id,WS,RF.mtry,RF.ntree,Predictors,CV=TRUE,verbose=TRUE)
     OUTPUT<-cbind(OUTPUT,prds)
     colnames(OUTPUT)[ncol(OUTPUT)]<-paste("prds",colname,sep="")
     colname<-colname+1
+    })
   }
   
+  OUTPUT<-data.frame(OUTPUT,row.names=NULL)                   #### Need this so the row.names duplicated error doesn't come up. 
+
   OUT<-cbind(Track,OUTPUT)
   
   if(verbose){cat("model predictions successful","\n")
@@ -348,7 +352,8 @@ RF.preds<-function(Track,Id,WS,RF.mtry,RF.ntree,Predictors,CV=TRUE,verbose=TRUE)
   }
 
   return(OUT)
-}
+
+  }
 
 
 ####################################################################################################
@@ -381,6 +386,7 @@ Pred.Correct<-function(Track,write.out=TRUE,Id=NA,WS=NA,verbose=TRUE){
   A<-Track[,grep("prd",names(Track))] -1
   
   B<-rowMeans(A,na.rm=TRUE)
+  
   ### In case some NANs are formed - we convert those to 0s
   B[is.nan(B)]<-0
   
@@ -412,6 +418,7 @@ Pred.Correct<-function(Track,write.out=TRUE,Id=NA,WS=NA,verbose=TRUE){
     if(E$D.values[i]>0 & E$D.length[i]>2){
       ## the value of E$rows[i-1] is the index BEFORE the sequence starts repeating.. so we add 1 to get the starting point
       Start<-E$rows[i-1]+1
+      print(Start)
       ## The number of times it repeats is in the value E$D.length[i]
       Len<-E$D.length[i]
       
@@ -420,7 +427,7 @@ Pred.Correct<-function(Track,write.out=TRUE,Id=NA,WS=NA,verbose=TRUE){
       ## we will place them at the "quarter way" mark (i.e 1/4th of the way along the sequence)
       
       qrtpoint<-Start+(floor((Len)/4))
-      
+
       ## We take the value of the cluster label and place it at the quarter way mark of the sequence
       f[qrtpoint]<-E$D.value[i]
     }

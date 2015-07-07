@@ -3,24 +3,24 @@
 source("C:/Users/Grant/Dropbox/GrantHumphriesBackup/Projects/Albatross/Codes/AlbiForage/Predict_Functions.R")
 
 
-Predictors<-c("SWH","Bathy","Dist_to_coast","SST","WindDifferential","WindDirToFlight","Period","T_before","T_after",
+Predictors<-c("Period","T_before","T_after",
               "Sp_before","WD_before","WDTF_before","HeadWind","ResT_before","ResT_after","ResT_during","Approach","Depart","NumTurnsBefore",
-              "NumTurnsAfter","MajTurnsBefore","SPslope","Fnspd","Sp_around_event","torSeg1","AccelSeg1","Pathchange1","PathChange_headwind1",
-              "WinDifSeg1","torSeg2","AccelSeg2","Pathchange2","PathChange_headwind2","WinDifSeg2")
+              "NumTurnsAfter","MajTurnsBefore","SPslope","Fnspd","Sp_around_event","torSeg1","AccelSeg1","Pathchange1",
+              "torSeg2","AccelSeg2","Pathchange2")
 
-
+#"SWH","Bathy","Dist_to_coast","SST",
 #Predictors<-c("ResT_during","torSeg2","ResT_before","Fnspd")
+#"WinDifSeg1",,"WinDifSeg2","PathChange_headwind2""PathChange_headwind1""WindDifferential","WindDirToFlight"
 
 
-
-WS<-"C:/Users/Grant/Dropbox/GrantHumphriesBackup/Projects/Albatross/WAAL/Bird_Tracks_Resampled_April27_2015/Summarized_data/"
-ModWS<-"C:/Users/Grant/Dropbox/GrantHumphriesBackup/Projects/Albatross/WAAL/Bird_Tracks_Resampled_April27_2015/ModelData/"
-PlotWS<-"C:/Users/Grant/Dropbox/GrantHumphriesBackup/Projects/Albatross/WAAL/Bird_Tracks_Resampled_April27_2015/TEMP/"
+WS<-"C:/Users/Grant/Dropbox/GrantHumphriesBackup/Projects/Albatross/WAAL/analysis/resampled_120_sec/summarized/"
+ModWS<-"C:/Users/Grant/Dropbox/GrantHumphriesBackup/Projects/Albatross/WAAL/analysis/resampled_120_sec/model_data/"
+PlotWS<-"C:/Users/Grant/Dropbox/GrantHumphriesBackup/Projects/Albatross/WAAL/analysis/resampled_120_sec/plots/"
 Species<-"WAAL"
 
-Nmodels<-5
-samples<-200
-Nclus<-3
+Nmodels<-30
+samples<-60
+Nclus<-2
 RF.mtry<-3
 RF.ntree<-1000
 range<-10
@@ -41,19 +41,20 @@ while(length(Predictors)>3){
   colnames(assess.matrix)<-c("Prop.corr","Total.Over","Beh.Type","Bird","Tdiff")
 
   for(Track in Tracks){
-
+  try({
     Id<-as.character(Track$BirdName[1])
     print(Id)
     
     df<-cluslab.to.track(Track,Id,ModWS,verbose=TRUE)
-    dfprd<-RF.preds(df,Id,ModWS,RF.mtry,RF.ntree,Predictors,CV=FALSE,verbose=F)  
-    prdcor<-Pred.Correct(dfprd,write.out=F,Id,PlotWS,verbose=FALSE)
+    dfprd<-RF.preds(df,Id,ModWS,RF.mtry,RF.ntree,Predictors,CV=FALSE,verbose=TRUE)  
+    prdcor<-Pred.Correct(dfprd,write.out=T,Id,PlotWS,verbose=FALSE)
     
     SummaryTable<-Summary.table(prdcor, range)
     print(SummaryTable)
     
     Assessment<-assess.model(SummaryTable, Id)
     assess.matrix<-rbind(assess.matrix,Assessment)
+  })
   }
 
   matrix.name<-paste(PlotWS,"Output_assessment/assess_",zz,".csv",sep="")
@@ -72,7 +73,7 @@ while(length(Predictors)>3){
 
 
 WS<-PlotWS
-Plot.track(plot.all=FALSE,PlotWS,interactive=TRUE,Sit.Fly=FALSE,verbose=TRUE)
+Plot.track(plot.all=TRUE,PlotWS,interactive=FALSE,Sit.Fly=FALSE,verbose=TRUE)
 
 
 
