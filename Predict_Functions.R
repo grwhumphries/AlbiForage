@@ -15,6 +15,7 @@ library(randomForest)
 library(iplots)
 library(ggplot2)
 library(ggvis)
+library(ggmap)
 library(dplyr)
 library(rgl)
 source("C:/Users/Grant/Dropbox/GrantHumphriesBackup/Projects/Albatross/Codes/RF_Clustering.R")
@@ -249,7 +250,9 @@ cluslab.to.track<-function(Track,Id,WS,verbose=TRUE){
   A<-tbl_df(read.table(Modlist[[1]],sep=",",header=T))                               ### We read the very first Modlist file because the clusterlab data are all the same (only non-events) vary between each training file
   A<-filter(A,clusterlab>0)                                                          ### Now subset out cluster labels > 0
   B<-tbl_df(data.frame(Index=A$Eindex,BirdName=A$BirdName,Type=A$clusterlab))
-  
+  B$Index<-B$Index - 10                                                              ### We need to subtract 10 to get through issues with  to offset we use in summarizing
+
+
   C<-filter(B,BirdName==Id)                                                          ### Select values from B, where BirdName = the Id (bird of interest)
   Track$clusterlab<-"0"
   C<-filter(C,Index<nrow(Track))
@@ -347,6 +350,7 @@ RF.preds<-function(Track,Id,WS,RF.mtry,RF.ntree,Predictors,CV=TRUE,verbose=TRUE)
 
   OUT<-cbind(Track,OUTPUT)
   
+
   if(verbose){cat("model predictions successful","\n")
               cat("--------------------------------------------------------------","\n")
   }
@@ -385,6 +389,8 @@ Pred.Correct<-function(Track,write.out=TRUE,Id=NA,WS=NA,verbose=TRUE){
   ### Selects all the columns with "prd" in the name (prediction columns), subtracts 1 (predictions are made from 1+, but need to start at 0)
   A<-Track[,grep("prd",names(Track))] -1
   
+  row.names(A)<-rownames(A)                               ### Have to set this so row names get pulled over properly for plotting
+
   B<-rowMeans(A,na.rm=TRUE)
   
   ### In case some NANs are formed - we convert those to 0s
@@ -627,20 +633,33 @@ Plot.track<-function(plot.all=TRUE,WS,interactive=FALSE,Sit.Fly=FALSE,verbose=TR
       f<-rbind(D,E)                                                                                                             ## We rbind the two frames here  and then convert the newly formed Index column to a factor
       f$Index<-factor(f$Index)
       
+       
+      
+      mapImageData <- get_map(location = c(lon = mean(f$x),lat = mean(f$y)),
+                              color = "color", source = "google",
+                              maptype = "satellite", zoom = 5)
+      
+      XLIMS<-c(min(f$x)-0.25,max(f$x)+0.25)
+      YLIMS<-c(min(f$y)-0.25,max(f$y)+0.25)
+      
+      COORDS<-coord_fixed(xlim=XLIMS,ylim=YLIMS)
+      
+      
       ###### Calling in the ggplot here
-      Gp<-ggplot(data=f,aes(x=x,y=y))
+      Gp<-ggmap(mapImageData, extent = "panel",ylab = "Latitude", xlab = "Longitude",legend = "right")
       
       G<-Gp+ggtitle(C.ID)+
         
         geom_point(data=f,aes(x=x,y=y,color=Index,size=Index,shape=Index))+ 
-
-        scale_color_manual(values=c("0"="black","1"="orange","2"="blue","3"="purple","4"= "red",
-                                    "11" = "orange", "12" = "blue", "13" = "purple", "14" = "red"),
+        geom_path(data=D,aes(x=x,y=y),color='firebrick',na.rm=TRUE)+
+        geom_point(aes(x=51.46, y=-46.25),shape=4,color="yellow")+
+        scale_color_manual(values=c("0"="black","1"="orange","2"="green4","3"="hotpink4","4"= "red",
+                                    "11" = "orange", "12" = "green4", "13" = "hotpink4", "14" = "red"),
                            
                            labels=c("0"="Not foraging","1"="foraging type 1","2"="foraging type 2","3"="foraging type 3","4"= "foraging type 4",
                                     "11" = "predicted 1", "12" = "predicted 2", "13" = "predicted 3", "14" = "predicted 4"))+                   
-                           
-                      
+        
+        
         scale_size_manual(values=c("0"=0.5,"1"=4,"2"=4,"3"=4,"4"= 4,"11"=7 , "12"=7, "13"=7, "14"=7),
                           
                           labels=c("0"="Not foraging","1"="foraging type 1","2"="foraging type 2","3"="foraging type 3","4"= "foraging type 4",
@@ -651,7 +670,13 @@ Plot.track<-function(plot.all=TRUE,WS,interactive=FALSE,Sit.Fly=FALSE,verbose=TR
                            
                            labels=c("0"="Not foraging","1"="foraging type 1","2"="foraging type 2","3"="foraging type 3","4"= "foraging type 4",
                                     "11" = "predicted 1", "12" = "predicted 2", "13" = "predicted 3", "14" = "predicted 4"))+     
-              
+        
+        COORDS+
+        
+        
+        
+        
+        
         #geom_point(data=Trck.sit,aes(x=X.Longitude,y=X.Latitude),color="black",size=0.5)+
         theme(axis.line=element_blank(),
               axis.ticks=element_blank(),
@@ -669,9 +694,10 @@ Plot.track<-function(plot.all=TRUE,WS,interactive=FALSE,Sit.Fly=FALSE,verbose=TR
       G
       
       filename<-paste(outputspace,C.ID,".tiff",sep="")
-      ggsave(filename,width=140,height=100,units="mm",dpi=600)
+      ggsave(filename,width=140,height=100,units="mm",dpi=200)
       
       
+      remove(G)
     }
   }
 
