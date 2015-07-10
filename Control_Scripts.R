@@ -53,7 +53,7 @@ for(Track in Tracks){
 }
 
 
-Plot.track(plot.all=TRUE,PlotWS,interactive=FALSE,Sit.Fly=FALSE,verbose=TRUE)
+Plot.track(plot.all=TRUE,PlotWS,interactive=FALSE,Sit.Fly=FALSE,verbose=TRUE,shape.out=TRUE)
 
 
 #### Incubating v Brooding birds
@@ -72,6 +72,11 @@ Nclus<-2
 RF.mtry<-5
 RF.ntree<-6000
 range<-10
+
+filenames=list.files(path=WS, pattern="*.txt",full.names=TRUE)                                 
+Tracks = lapply(filenames, function(x){read.table(file=x,sep=",",header=T)})
+
+
 
 assess.matrix<-matrix(ncol=5,nrow=0)
 colnames(assess.matrix)<-c("Prop.corr","Total.Over","Beh.Type","Bird","Tdiff")
@@ -92,7 +97,7 @@ for(Track in Tracks){
     assess.matrix<-rbind(assess.matrix,Assessment)
   })
 }
-Plot.track(plot.all=TRUE,PlotWS,interactive=FALSE,Sit.Fly=FALSE,verbose=TRUE)
+Plot.track(plot.all=TRUE,PlotWS,interactive=FALSE,Sit.Fly=FALSE,verbose=TRUE,shape.out=TRUE)
 
 
 

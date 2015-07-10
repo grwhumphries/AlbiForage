@@ -571,13 +571,13 @@ assess.model<-function(SummaryTable, Id){
 ##########################################################################################
 
 
-Plot.track<-function(plot.all=TRUE,WS,interactive=FALSE,Sit.Fly=FALSE,verbose=TRUE){
+Plot.track<-function(plot.all=TRUE,WS,interactive=FALSE,Sit.Fly=FALSE,verbose=TRUE,shape.out=FALSE){
 #########################################################################################################################
 # plot.all        = If true, plots for all tracks in WS will be plotted                                           (boolean)
 # WS              = WS where tracks are located for plotting                                                      (Character string)
 # interactive     = If true, user will be able to select an individual bird and then plot it interactively        (boolean)
 # Sit.Fly         = If true, the values of Sitting v Flying will be plotted on the map                            (boolean)
-
+# shape.out       = If true, then shape files are output                                                          (boolean)
   
 ####################################################
 # Variable definitions in function
@@ -615,7 +615,7 @@ Plot.track<-function(plot.all=TRUE,WS,interactive=FALSE,Sit.Fly=FALSE,verbose=TR
       cat("creating new directory", outputspace,"\n")
       cat("--------------------------------------------------------------------------------","\n")
     }
-    
+      
     
     A<-list.files(path=WS, pattern="*.txt",full.names=TRUE)                                                                     ### List all the files in the workspace
     B<-lapply(A, function(x){read.table(file=x,sep=",",header=T)})                                                              ### Then we use lapply to open them all simultaneously so we don't have to open them one at a time
@@ -624,6 +624,20 @@ Plot.track<-function(plot.all=TRUE,WS,interactive=FALSE,Sit.Fly=FALSE,verbose=TR
       
       C.ID<-as.character(C$BirdName[1])                                                                                         ## this creates the ID of the track for plotting and saving        
       if(verbose) cat("Creating output plot for",C.ID,"\n")
+      
+      
+      if(shape.out==TRUE){
+        name<-paste(WS,"/",C.ID,".shp",sep="")
+        cat("Shapefile created","\n")
+        Cpro<-project(cbind(C$X.Longitude,C$X.Latitude), "+proj=utm +zone=42 ellps=WGS84")
+        
+        Csp<-SpatialPointsDataFrame(Cpro,C, proj4string=CRS("+proj=utm +zone=42 ellps=WGS84"))
+        
+        writeOGR(obj = Csp,dsn = name,layer = C.ID,driver = "ESRI Shapefile")
+
+      }
+      
+      
       D<-data.frame(sitfly=as.factor(C$Sit.Fly),observed=C$clusterlab,predicted=C$predicted,x=C$X.Longitude,y=C$X.Latitude)     ## Select the data we need from C
       D$Index<-D$observed
       
@@ -637,7 +651,7 @@ Plot.track<-function(plot.all=TRUE,WS,interactive=FALSE,Sit.Fly=FALSE,verbose=TR
       
       mapImageData <- get_map(location = c(lon = mean(f$x),lat = mean(f$y)),
                               color = "color", source = "google",
-                              maptype = "satellite", zoom = 5)
+                              maptype = "satellite", zoom = 6)
       
       XLIMS<-c(min(f$x)-0.25,max(f$x)+0.25)
       YLIMS<-c(min(f$y)-0.25,max(f$y)+0.25)
@@ -652,7 +666,7 @@ Plot.track<-function(plot.all=TRUE,WS,interactive=FALSE,Sit.Fly=FALSE,verbose=TR
         
         geom_point(data=f,aes(x=x,y=y,color=Index,size=Index,shape=Index))+ 
         geom_path(data=D,aes(x=x,y=y),color='firebrick',na.rm=TRUE)+
-        geom_point(aes(x=51.46, y=-46.25),shape=4,color="yellow")+
+        #geom_point(aes(x=51.46, y=-46.25),shape=4,color="yellow")+
         scale_color_manual(values=c("0"="black","1"="orange","2"="green4","3"="hotpink4","4"= "red",
                                     "11" = "orange", "12" = "green4", "13" = "hotpink4", "14" = "red"),
                            
